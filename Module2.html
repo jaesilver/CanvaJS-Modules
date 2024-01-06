@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 2 - MIDHUN MAHESH</title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        canvas {
+            border: 1px solid #000;
+            cursor: crosshair;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="paintCanvas" width="900" height="600"></canvas>
+<button id="resetButton">Reset the Canvas</button>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const canvas = document.getElementById("paintCanvas");
+        const context = canvas.getContext("2d");
+        const circles = [];
+        let isResizing = false;
+        let startX, startY, endX, endY;
+        let currentColor;
+        let hitText = "";
+
+        function startResizing(event) {
+            isResizing = true;
+            startX = event.clientX - canvas.offsetLeft;
+            startY = event.clientY - canvas.offsetTop;
+            endX = startX;
+            endY = startY;
+            currentColor = getRandomColor();
+            draw();
+        }
+
+        function stopResizing() {
+            if (isResizing) {
+                isResizing = false;
+                circles.push({ startX, startY, endX, endY, color: currentColor });
+                draw();
+            }
+        }
+
+        function draw() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            let isHit = false;
+
+            circles.forEach(circle => {
+                const radius = Math.sqrt(Math.pow(circle.endX - circle.startX, 2) + Math.pow(circle.endY - circle.startY, 2));
+                context.fillStyle = circle.color;
+                context.beginPath();
+                context.arc(circle.startX, circle.startY, radius, 0, 2 * Math.PI);
+                context.fill();
+
+                // Check if the cursor is inside the circle
+                if (isCursorInsideCircle(event, circle.startX, circle.startY, radius)) {
+                    isHit = checkHit(circle.startX, circle.startY, circles);
+                }
+            });
+
+            if (isResizing) {
+                endX = event.clientX - canvas.offsetLeft;
+                endY = event.clientY - canvas.offsetTop;
+
+                const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+                context.fillStyle = currentColor;
+                context.beginPath();
+                context.arc(startX, startY, radius, 0, 2 * Math.PI);
+                context.fill();
+            }
+
+            // Set hit or miss text
+            hitText = isHit ? "Hit" : "Miss";
+
+            // Display hit or miss text
+            context.fillStyle = "black";
+            context.font = "16px Arial";
+            context.fillText(hitText, 10, 20);
+        }
+
+        function getRandomColor() {
+            const letters = "0123456789ABCDEF";
+            let color = "#";
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function resetCanvas() {
+            circles.length = 0;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function isCursorInsideCircle(event, circleX, circleY, radius) {
+            const mouseX = event.clientX - canvas.offsetLeft;
+            const mouseY = event.clientY - canvas.offsetTop;
+
+            const distance = Math.sqrt(Math.pow(mouseX - circleX, 2) + Math.pow(mouseY - circleY, 2));
+            return distance <= radius;
+        }
+
+        function checkHit(x, y, circles) {
+            let isHit = false;
+
+            circles.forEach(circle => {
+                if (circle.startX !== x || circle.startY !== y) {
+                    const radius = Math.sqrt(Math.pow(circle.endX - circle.startX, 2) + Math.pow(circle.endY - circle.startY, 2));
+
+                    if (isCursorInsideCircle(event, circle.startX, circle.startY, radius)) {
+                        isHit = true;
+                    }
+                }
+            });
+
+            return isHit;
+        }
+
+        // Event listeners
+        canvas.addEventListener("mousedown", startResizing);
+        canvas.addEventListener("mousemove", draw);
+        canvas.addEventListener("mouseup", stopResizing);
+        canvas.addEventListener("mouseout", stopResizing);
+
+        document.getElementById("resetButton").addEventListener("click", resetCanvas);
+    });
+</script>
+
+</body>
+</html>
